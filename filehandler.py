@@ -3,7 +3,7 @@ import os
 from byteconvert import ByteConvert
 import time
 import boto3
-import queuehandler
+#import queuehandler
 info=[]
 with open("/home/deno/.aws_creds") as f:
     for line in f:
@@ -15,29 +15,20 @@ class FileHandler (object):
     FILE = None
     s3 = None
     progressQueue=None
+    cDir = '/file'
     def __init__(self, FILE):
+        FILE['path'] = self.cDir
+        FILE['FULL_PATH'] = FILE['path'] + FILE['name']
         self.FILE=FILE
+
         self.s3 = boto3.client(
             's3',
             aws_access_key_id=access_id,
             aws_secret_access_key=access_secret
         )
-        self.DQ = queuehandler.DissectQueue()
+         # self.DQ = queuehandler.DissectQueue() CHANGE USER QUEUE
 
-    def prepare (self):
-        self.FILE['path'] = '/home/deno/processing/{}/{}/'.format(self.FILE['user'],time.strftime("%Y-%m-%d_%H:%M:%S",time.gmtime()))
-        self.FILE['FULL_PATH'] = self.FILE['path'] + self.FILE['id']
-        prepare_command = 'mkdir -p {}'.format(self.FILE['path'])
-        #subprocess.check_call(prepare_command)
-        os.system(prepare_command)
-        self.downloadFromS3()
-
-    def downloadFromS3 (self):
-        self.DQ.sendToUserQueue(self.FILE,10)
-        with open(self.FILE['FULL_PATH'],'wb') as data:
-            self.s3.download_fileobj(self.FILE['bucket'],self.FILE['id'], data)
-
-    def process(self):
+    def processSplit(self):
 
         self.findSplitSize()
         fileName = self.FILE['FULL_PATH']
@@ -51,8 +42,6 @@ class FileHandler (object):
         split_command = ['split', '--bytes', sizeandunit, '-d', '-a', '3', fileName, splitName]
         subprocess.check_call(split_command)
 
-    def upload(self):
-        pass
     def findSplitSize(self):
         self.FILE['size']=os.path.getsize(self.FILE['FULL_PATH'])
             # CLEANS THIS UP
@@ -83,10 +72,4 @@ class FileHandler (object):
     def reset(self): #cleans up files to retry file compression
         reset_command = 'rm {}.*'.format(self.FILE['FILE_PATH'])
         subprocess.check_call(reset_command)
-
-
-    def purge(self): #deletes folder and cleans file
-        purge_command = 'rm -r {}*'.format(self.FILE['path'])
-        subprocess.check_call(purge_command)
-
 
