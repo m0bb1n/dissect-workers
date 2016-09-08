@@ -5,6 +5,7 @@ import time
 from heartbeat import HeartbeatSocket
 import thread
 import os
+
 class DissectWorker(object):
     FILE = None
     progressQueue = None
@@ -40,9 +41,8 @@ class DissectWorker(object):
         )
 
 
-
 if __name__ == "__main__":
-    thread.start_new_thread(HeartbeatSocket('',9999).listenForClient,())
+    thread.start_new_thread(HeartbeatSocket(os.environ['manager_url'],9999).listenForClient,())
     DW = DissectWorker()
     DW.start()
-
+    ### FINISHES DOING EVERYTHING AND THEN TERMINATES ITSELF

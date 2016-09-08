@@ -1,26 +1,22 @@
-
 import json
 import os
 import io
 import requests
-#from mediafire import MediaFireApi, MediaFireUploader
+from mediafire import MediaFireApi, MediaFireUploader
 from resource import CloudAccount
 from apiclient import discovery
 import httplib2
 import oauth2client
 from oauth2client import client
 from oauth2client import tools
-from apiclient.http import MediaIoBaseDownload
-
+from apiclient.http import MediaIoBaseDownload, MediaFileUpload, MediaIoBaseUpload
 
 scopes = 'https://www.googleapis.com/auth/drive'
-cs = 'client_secret.json'
+cs = '/home/deno/.client_secret.json'
 appn = 'Dissect ALPHA'
 
 class GoogleDrive (CloudAccount):
     def __init__ (self):
-
-        fileID='s'
 
 
         flow = client.flow_from_clientsecrets(cs, scopes)
@@ -31,28 +27,39 @@ class GoogleDrive (CloudAccount):
         credentials = tools.run_flow(flow, store) #add flags at the end
 
         http = credentials.authorize(httplib2.Http())
-        print 'http:' + str(http)
-        print 'crenditital:' + str(credentials)
+        #print 'http:' + str(http)
+        #print 'crenditital:' + str(credentials)
         self.cloud = discovery.build('drive', 'v3', http=http)
 
-        self.getStorageQuota()
-        exit(1)
-        results = self.cloud.files().list(
-            pageSize=10,fields="nextPageToken, files(id, name)").execute()
+        #results = self.cloud.files().list(
+        #    pageSize=10,fields="nextPageToken, files(id, name)").execute()
 
-        items = results.get('files', [])
+        #items = results.get('files', [])
 
-        if not items:
-            print('No files found.')
-        else:
-            print('Files:')
-            for item in items:
-                print('{0} ({1})'.format(item['name'], item['id']))
+        #if not items:
+        #    print('No files found.')
+        #else:
+        #    print('Files:')
+        #    for item in items:
+        #        print('{0} ({1})'.format(item['name'], item['id']))
 
     def upload (self, FILE):
-        for f in FILE['parts']['googledrive']:
+        #for f in FILE['parts']['googledrive']:
+        if True:
+            print 'starting upload'
+            f={}
+            f['id']='69'
+            mimetype='application/octet-stream'
+            f['path']='/home/deno/Downloads/gravity_2k-trailer.zip'
+            media_body= MediaFileUpload(f['path'], mimetype=mimetype, resumable=True, chunksize=1024*1024)
+            body= {
+                'title':f['id'],
+                'mimeType':mimetype
+            }
+            request=self.cloud.files().create(body=body, media_body=media_body).execute()
+            f['cid']=request['id']
+            print f['cid']
             #make a POST https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable
-            pass
 
     def download(self, fileID):
         #for f in FILE['parts']['googledrive']:
@@ -84,5 +91,5 @@ class MediaFire (CloudAccount):
         for f in FILE['parts']['mediafire']:
             pass
 
-
-
+test = GoogleDrive()
+test.upload('sd')
